@@ -15,6 +15,10 @@ void setup()
 {
   delay(2500);
 usbSerial.begin(115200);
+  pinMode(PAIGER_BUTTON,INPUT_PULLDOWN);
+  pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(11,INPUT);
+  digitalWrite(LED_BUILTIN,1);
 
 notecard.begin();
 notecard.setDebugOutputStream(usbSerial);
@@ -33,39 +37,21 @@ JAddBoolToObject(req, "sync", true);
 J* rsp=notecard.requestAndResponse(req);
 usbSerial.println(JConvertToJSONString(rsp));
 }
-  // initialize digital pin LED_BUILTIN as an output.
-// {
-//   "req": "card.aux",
-//   "mode": "gpio",
-//   "usage": ["off", "low", "high", "input"]
-// }
 
+
+// set up auxgpio: make aux1 input and turns off  all other  auxgpio
 req = NoteNewRequest("card.aux");
 JAddStringToObject(req, "mode", "gpio");
 
 J *pins = JAddArrayToObject(req, "usage");
-JAddItemToArray(pins, JCreateString("input"));   // AUX1
+JAddItemToArray(pins, JCreateString("input-pullup"));   // AUX1
 JAddItemToArray(pins, JCreateString("off"));   // AUX2
 JAddItemToArray(pins, JCreateString("off"));  // AUX3
 JAddItemToArray(pins, JCreateString("off")); // AUX4
-
 NoteRequest(req);
 
 
-
-  pinMode(PAIGER_BUTTON,INPUT_PULLDOWN);
-  pinMode(LED_BUILTIN,OUTPUT);
-  pinMode(11,INPUT);
-  digitalWrite(LED_BUILTIN,1);
-}
-
-// the loop function runs over and over again forever
-void loop()
-{
-  //Serial.println("now in loop");
-  Serial.println(digitalRead(11));
-  digitalWrite(LED_BUILTIN, digitalRead(11));
-if(digitalRead(PAIGER_BUTTON)){
+// sending message
   Serial.println("starting request");
   req = notecard.newRequest("note.add");
   
@@ -82,6 +68,41 @@ if(digitalRead(PAIGER_BUTTON)){
     }
     notecard.sendRequest(req);
     delay(1000);
-  }
+Serial.println("message sent");
+  //when done go back to sleep
+  // the arm command set the ATTN pin on the notecarrier low,
+  // I have connected the ATTN pin to the EN pin of SWAN
+  // so when the ATTN pin is LOW swan will go to sleep
+Serial.println("going back to sleep");
+digitalWrite(LED_BUILTIN,1);
+req = NoteNewRequest("card.attn");
+JAddStringToObject(req, "mode", "arm,auxgpio");
+NoteRequest(req);
+}
+
+// the loop function runs over and over again forever
+void loop()
+{
+  //Serial.println("now in loop");
+ // Serial.println(digitalRead(11));
+//   digitalWrite(LED_BUILTIN, digitalRead(11));
+// if(digitalRead(PAIGER_BUTTON)){
+//   Serial.println("starting request");
+//   req = notecard.newRequest("note.add");
+  
+//   if (req != NULL)
+//   {
+//     JAddStringToObject(req, "file", "msg.qo");
+//     JAddBoolToObject(req, "sync", true);
+//     J *body = JAddObjectToObject(req, "body");
+//   //   if (body)
+//   //   {
+//   //     JAddStringToObject(body, "To","+2349056149453" );
+//   // get number from eeprom
+//   //  }
+//     }
+//     notecard.sendRequest(req);
+//     delay(1000);
+//   }
 }
 
