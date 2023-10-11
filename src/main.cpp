@@ -2,26 +2,37 @@
 #include <Notecard.h>
 //#include <EEPROM.h>
 
-#define usbSerial Serial
+#define DEBUG 0
+
+#if DEBUG == 0
+#define debug(x) Serial.print(x)
+#define debugln(x) Serial.println(x)
+#define debugln2Param(x, y) Serial.println(x, y)
+
+
+#else
+#define debug(x)
+#define debugln(x)
+#endif
+
+//#define usbSerial Serial
 #define productUID "com.gmail.onyemandukwu:handypager"
-#define PAIGER_BUTTON 12
 Notecard notecard;
 
 J *req=nullptr;
-
+char *toNumber; // number to send message to
 
 // the setup function runs once when you press reset or power the board
 void setup()
 {
   delay(2500);
-usbSerial.begin(115200);
-  pinMode(PAIGER_BUTTON,INPUT_PULLDOWN);
+Serial.begin(115200);
   pinMode(LED_BUILTIN,OUTPUT);
   pinMode(11,INPUT);
   digitalWrite(LED_BUILTIN,1);
 
 notecard.begin();
-notecard.setDebugOutputStream(usbSerial);
+notecard.setDebugOutputStream(Serial);
 
 req = notecard.newRequest("hub.set");
 JAddStringToObject(req, "product", productUID);
@@ -35,7 +46,10 @@ if(req !=NULL ){
 JAddStringToObject(req, "file", "mydata.dbs");
 JAddBoolToObject(req, "sync", true);
 J* rsp=notecard.requestAndResponse(req);
-usbSerial.println(JConvertToJSONString(rsp));
+debugln(JConvertToJSONString(rsp));
+J *body= JGetObject(rsp,"body");
+toNumber = JGetString(body,"phone_number");
+debugln(toNumber);
 }
 
 
@@ -52,7 +66,7 @@ NoteRequest(req);
 
 
 // sending message
-  Serial.println("starting request");
+ debugln("starting request");
   req = notecard.newRequest("note.add");
   
   if (req != NULL)
@@ -60,20 +74,20 @@ NoteRequest(req);
     JAddStringToObject(req, "file", "msg.qo");
     JAddBoolToObject(req, "sync", true);
     J *body = JAddObjectToObject(req, "body");
-  //   if (body)
-  //   {
-  //     JAddStringToObject(body, "To","+2349056149453" );
-  // get number from eeprom
-  //  }
+    if (body)
+    {
+      JAddStringToObject(body, "To",toNumber);
+  //get number from eeprom
+   }
     }
     notecard.sendRequest(req);
     delay(1000);
-Serial.println("message sent");
+debugln("message sent");
   //when done go back to sleep
   // the arm command set the ATTN pin on the notecarrier low,
   // I have connected the ATTN pin to the EN pin of SWAN
   // so when the ATTN pin is LOW swan will go to sleep
-Serial.println("going back to sleep");
+debugln("going back to sleep");
 digitalWrite(LED_BUILTIN,1);
 req = NoteNewRequest("card.attn");
 JAddStringToObject(req, "mode", "arm,auxgpio");
