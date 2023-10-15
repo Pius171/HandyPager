@@ -63,20 +63,20 @@ void setup()
 
   // sending message
   debugln("starting request");
-  // req = notecard.newRequest("note.add");
+  req = notecard.newRequest("note.add");
 
-  // if (req != NULL)
-  // {
-  //   JAddStringToObject(req, "file", "msg.qo");
-  //   JAddBoolToObject(req, "sync", true);
-  //   J *body = JAddObjectToObject(req, "body");
-  //   if (body)
-  //   {
-  //     JAddStringToObject(body, "To", toNumber);
-  //     // get number from eeprom
-  //   }
-  // }
-  // notecard.sendRequest(req);
+  if (req != NULL)
+  {
+    JAddStringToObject(req, "file", "msg.qo");
+    JAddBoolToObject(req, "sync", true);
+    J *body = JAddObjectToObject(req, "body");
+    if (body)
+    {
+      JAddStringToObject(body, "To", toNumber);
+      // get number from eeprom
+    }
+  }
+  notecard.sendRequest(req);
   //delay(1000);
   debugln("message sent");
   // when done go back to sleep
